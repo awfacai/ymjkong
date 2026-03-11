@@ -1,0 +1,35 @@
+name: Unzip File to Root
+
+on:
+  push:
+    paths:
+      - 'renewhelper-main.zip' # 只有当这个压缩包更新时才触发
+  workflow_dispatch: # 允许你手动点击运行
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Unzip the file
+        run: |
+          # 解压缩到临时文件夹
+          unzip renewhelper-main.zip -d ./temp_unzip
+          
+          # 将解压出来的所有文件移动到根目录
+          # 注意：通常 zip 会包含一层父文件夹，我们直接移动里面的内容
+          mv ./temp_unzip/*/* . 2>/dev/null || mv ./temp_unzip/* .
+          
+          # 删除临时文件夹和压缩包
+          rm -rf temp_unzip
+          rm renewhelper-main.zip
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Auto-unzip: extracted files to root"
+          git push
